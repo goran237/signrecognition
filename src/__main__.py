@@ -1,6 +1,7 @@
 from src.utils.data.importer.DataImporter import import_data
 from src.utils.data.process.DataHelper import DataHelper
 from src.utils.data.process.DataProcessor import preprocess_images
+from src.utils.data.process.DataSetPreparation import DataSetPreparation
 import sys
 
 
@@ -12,5 +13,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
-    sys.exit(main() or 0)
+    DataSetPreparation('utils/data/GTSRB/Final_Training/sorted')
+    sys.exit(0)
+    #main()
+    #sys.exit(main() or 0)
