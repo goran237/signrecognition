@@ -5,6 +5,9 @@ import imgaug as ia
 from imgaug import augmenters as iaa
 import cv2
 
+import csv
+from shutil import copyfile
+
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 def DataSetPreparation(src_path, valid_ratio):
@@ -44,7 +47,7 @@ seq = iaa.Sequential(
         # iaa.Fliplr(0.5), # horizontally flip 50% of the images
 
         iaa.Affine(
-            scale={"x": (0.5, 1.0), "y": (0.5, 1.0)},
+            scale={"x": (0.7, 1.0), "y": (0.7, 1.0)},
             # translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)}, # translate by -20 to +20 percent (per axis)
             rotate=(-15, 15),
             shear=(-7, 7),
@@ -53,19 +56,19 @@ seq = iaa.Sequential(
             mode='constant'
         ),
 
-        iaa.SomeOf((0, 6),
+        iaa.SomeOf((0, 3),
             [
-                iaa.GaussianBlur((0, 2.0)),  # blur images with a sigma of 0 to 3.0
+                iaa.GaussianBlur((0, 0.95)),  # blur images with a sigma of 0 to 3.0
                 iaa.Sharpen(alpha=(0, 0.10), lightness=(0.85, 1.25)),  # sharpen images
-                # iaa.Emboss(alpha=(0, 0.10), strength=(0, 0.3)), # emboss images
+                #iaa.Emboss(alpha=(0, 0.10), strength=(0, 0.3)), # emboss images
                 iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.025 * 255), per_channel=False),
                 # add gaussian noise to images
-                iaa.CoarseDropout((0.05, 0.1), size_percent=(0.50, 0.70), per_channel=False),
+                #iaa.CoarseDropout((0.05, 0.1), size_percent=(0.50, 0.70), per_channel=False),
                 # iaa.Add((-25, 25), per_channel=False), # change brightness of images (by -10 to 10 of original value)
-                iaa.Multiply((0.75, 1.25), per_channel=False),
+                #iaa.Multiply((0.75, 1.25), per_channel=False),
                 # iaa.ContrastNormalization((0.85, 1.15), per_channel=False), # improve or worsen the contrast
                 # distorsion
-                iaa.ElasticTransformation(alpha=(0.5, 2.0), sigma=0.25),
+                #iaa.ElasticTransformation(alpha=(0.5, 2.0), sigma=0.25),
             ]
         )
 
@@ -73,9 +76,49 @@ seq = iaa.Sequential(
     random_order=True
 )
 
-def AugmentImages(path_to_ds):
+def AugmentImages(path_to_ds, output_path, img_size, augment_num):
     dir_names = os.listdir(path_to_ds)
+    for dir_name in dir_names:
+        path_to_data_set = '{}/{}'.format(path_to_ds, dir_name)
+        img_names = os.listdir(path_to_data_set)
 
+        output_path_dir = '{}/{}/'.format(output_path, dir_name)
+        if not os.path.exists(output_path_dir):
+            os.makedirs(output_path_dir)
+
+        csv_file_name = '{}/{}/{}'.format(output_path, dir_name, img_names[-1])
+        in_csv = '{}/{}'.format(path_to_data_set, img_names[-1])
+        copyfile(in_csv, csv_file_name)
+        for img_name in img_names:
+            #last file in img_names is csv
+            if img_name != img_names[-1]:
+                img_path = '{}/{}'.format(path_to_data_set, img_name)
+                img = cv2.imread(img_path)
+                img = cv2.resize(img, img_size)
+                cv2.imwrite(output_path_dir + img_name, img)
+
+                aug_idx = 0
+                for i in range(augment_num):
+                    aug_img = seq.augment_image(img)
+                    file, ext = os.path.splitext(img_name)
+                    final_img_name = '{}{}_aug_{}{}'.format(output_path_dir, file, aug_idx, ext)
+                    aug_img_name = '{}_aug_{}{}'.format(file, aug_idx, ext)
+
+                    line = [aug_img_name, img_size[0], img_size[1], 0, 0, 0, 0, int(dir_name)]
+                    with open(csv_file_name, 'a', newline='') as f:
+                        writer = csv.writer(f, delimiter=';')
+                        writer.writerow(line)
+
+                    cv2.imwrite(final_img_name, aug_img)
+                    aug_idx += 1
+
+
+
+
+#nameing convention is as follows: existing: ...00000_00028, 00000_00029; augmented: 00000_00030
+#ALPHA VERSION
+def AugmentImages_incr(path_to_ds):
+    dir_names = os.listdir(path_to_ds)
     for dir_name in dir_names:
         path_to_data_set = '{}/{}'.format(path_to_ds, dir_name)
         img_names = os.listdir(path_to_data_set)

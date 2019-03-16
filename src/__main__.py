@@ -4,7 +4,7 @@ from src.utils.data.process.DataProcessor import preprocess_images
 from src.utils.data.process.DataSetPreparation import DataSetPreparation
 from src.utils.data.process.DataSetPreparation import AugmentImages
 import sys
-
+from ast import literal_eval
 
 def main():
     import_data()
@@ -14,7 +14,7 @@ def main():
 
 
 if __name__ == '__main__':
-    AugmentImages('utils/data/GTSRB/Final_Training/sorted')
+    AugmentImages(sys.argv[1], sys.argv[2], literal_eval(sys.argv[3]), int(sys.argv[4]))
     # DataSetPreparation('utils/data/GTSRB/Final_Training/sorted')
     sys.exit(0)
     #main()
