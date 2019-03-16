@@ -1,8 +1,8 @@
-from model.PlaceholderGenerator import generate_placeholders
+from src.model.PlaceholderGenerator import generate_placeholders
 import tensorflow as tf
 import numpy as np
 
-from utils.data.process.DataHelper import DataHelper
+from src.utils.data.process.DataHelper import DataHelper
 
 pic_dim = 48
 num_labels = 43

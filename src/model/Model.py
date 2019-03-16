@@ -1,4 +1,4 @@
-from model.HelperFunctions import convolutional_layer
+from src.model.HelperFunctions import convolutional_layer
 from src.model.PlaceholderGenerator import generate_placeholders
 
 class Model:
