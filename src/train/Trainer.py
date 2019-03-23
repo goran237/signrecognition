@@ -1,11 +1,12 @@
 import csv
 import logging
 
-from model import ModelGenerator
-from model.PlaceholderGenerator import generate_placeholders
+from src.model import ModelGenerator
+from src.model.PlaceholderGenerator import generate_placeholders
 import tensorflow as tf
 
-from utils.data.process.DataHelper import DataHelper
+from src.utils.data.process.DataHelper import DataHelper
+from src.utils.data.process.DataSetPreparation import DataGenerator
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -63,10 +64,11 @@ def perform_train():
                 for iteration in range(num_tr_iter):
                     global_step += 1
                     batch = data_helper.next_batch(batch_size, pic_dim)
-                    sess.run(optimizer, feed_dict={x: batch[0], y_true: batch[1], hold_prob: 0.5})
+                    batch_imgs, batch_labels = DataGenerator('utils/data/GTSRB/Final_Training/Images/', True, 32, (40, 40))
+                    sess.run(optimizer, feed_dict={x: batch_imgs, y_true: batch_labels, hold_prob: 0.5})
                     if iteration % display_freq == 0:
                         loss_batch, acc_batch, summary_tr = sess.run([loss, accuracy, merged],
-                                                                     feed_dict={x: batch[0], y_true: batch[1],
+                                                                     feed_dict={x: batch_imgs, y_true: batch_labels,
                                                                                 hold_prob: 0.5})
                         summary_writer.add_summary(summary_tr, global_step)
                         print("iter {0:3d}:\t Loss={1:.2f},\tTraining Accuracy={2:.05%}".

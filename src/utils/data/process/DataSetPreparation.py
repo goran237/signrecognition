@@ -1,12 +1,12 @@
 import numpy as np
 import shutil, os
 
-import imgaug as ia
 from imgaug import augmenters as iaa
 import cv2
 
 import csv
 from shutil import copyfile
+import random
 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
@@ -76,7 +76,45 @@ seq = iaa.Sequential(
     random_order=True
 )
 
+def DataGenerator(src_path, do_augment, batch_size=16,
+            input_size=(40, 40)):
+    all_file_list = []
+    for path, subdirs, files in os.walk(src_path):
+        for file in files:
+            if file.endswith('.ppm'):
+                all_file_list.append(os.path.join(path, file))
+
+    random.shuffle(all_file_list)
+    step_size = int(len(all_file_list) / batch_size)
+
+    while True:
+        batch_labels = np.empty(shape=[0, 0])
+        batch_imgs = np.zeros(shape=(batch_size,) + input_size + (3,))
+
+        for idx in range(len(all_file_list)):
+            file_name = all_file_list[idx]
+            label_value = file_name.split('/')
+            batch_labels = np.append(batch_labels, int(label_value[-1][0:5]))
+            img = cv2.imread(file_name)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = cv2.resize(img, input_size)
+            if do_augment:
+                img = seq.augment_image(img)
+
+            batch_imgs[idx] = img
+            if len(batch_imgs) % batch_size == 0:
+                step_size -= 1
+                batch_imgs = batch_imgs / 255.
+                yield batch_imgs, batch_labels
+            idx += 1
+
+        if step_size == 0:
+            break
+
+
 def AugmentImages(path_to_ds, output_path, img_size, augment_num):
+    batch_imgs, batch_labels = DataGenerator(path_to_ds, True)
+
     dir_names = os.listdir(path_to_ds)
     for dir_name in dir_names:
         path_to_data_set = '{}/{}'.format(path_to_ds, dir_name)

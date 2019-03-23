@@ -1,6 +1,5 @@
 from src.model.PlaceholderGenerator import generate_placeholders
 import tensorflow as tf
-import numpy as np
 
 from src.utils.data.process.DataHelper import DataHelper
 

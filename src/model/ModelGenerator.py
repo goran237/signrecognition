@@ -1,5 +1,5 @@
-from model.HelperFunctions import *
-from model.Model import Model
+from src.model.HelperFunctions import *
+from src.model.Model import Model
 
 def create_cnn_model(input_placeholder, hold_prob_placeholder):
     img_shape = (48, 48, 1)
