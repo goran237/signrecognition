@@ -8,6 +8,8 @@ import csv
 from shutil import copyfile
 import random
 
+
+
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 def DataSetPreparation(src_path, valid_ratio):
@@ -36,9 +38,9 @@ def DataSetPreparation(src_path, valid_ratio):
                     pass
 
                 path_to_file_name_dst = '{}/{}'.format(path_to_dir_name_dst, file_name)
-                shutil.move(path_to_file_name_src, path_to_file_name_dst)
+                shutil.copy(path_to_file_name_src, path_to_file_name_dst)
 
-    shutil.rmtree(src_path)
+    #shutil.rmtree(src_path)
 
 
 # transformations
@@ -76,6 +78,20 @@ seq = iaa.Sequential(
     random_order=True
 )
 
+
+def preprocess_train(img):
+    # print(img.shape, img.max(), img.min())
+
+    img = img.astype(np.uint8)
+    img = seq.augment_image(img)
+
+    img = img.astype(np.float32)
+    img /= 255.
+    #img -= 0.5
+    #img *= 2.
+
+    return img
+
 def DataGenerator(src_path, do_augment, batch_size=16,
             input_size=(40, 40)):
     all_file_list = []
@@ -87,26 +103,26 @@ def DataGenerator(src_path, do_augment, batch_size=16,
     random.shuffle(all_file_list)
     step_size = int(len(all_file_list) / batch_size)
 
-    while True:
-        batch_labels = np.empty(shape=[0, 0])
-        batch_imgs = np.zeros(shape=(batch_size,) + input_size + (3,))
 
-        for idx in range(len(all_file_list)):
-            file_name = all_file_list[idx]
-            label_value = file_name.split('/')
-            batch_labels = np.append(batch_labels, int(label_value[-1][0:5]))
-            img = cv2.imread(file_name)
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            img = cv2.resize(img, input_size)
-            if do_augment:
-                img = seq.augment_image(img)
+    batch_labels = np.empty(shape=[0, 0])
+    batch_imgs = np.zeros(shape=(batch_size,) + input_size + (3,))
 
-            batch_imgs[idx] = img
-            if len(batch_imgs) % batch_size == 0:
-                step_size -= 1
-                batch_imgs = batch_imgs / 255.
-                yield batch_imgs, batch_labels
-            idx += 1
+    for idx in range(len(all_file_list)):
+        file_name = all_file_list[idx]
+        label_value = file_name.split('/')
+        batch_labels = np.append(batch_labels, int(label_value[-1][0:5]))
+        img = cv2.imread(file_name)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.resize(img, input_size)
+        if do_augment:
+            img = seq.augment_image(img)
+
+        batch_imgs[idx] = img
+        if len(batch_imgs) % batch_size == 0:
+            step_size -= 1
+            batch_imgs = batch_imgs / 255.
+            yield batch_imgs, batch_labels
+        idx += 1
 
         if step_size == 0:
             break

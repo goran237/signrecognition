@@ -18,17 +18,17 @@ logger.addHandler(handler)
 
 def perform_train():
     epochs = 10
-    pic_dim = 48
+    pic_dim = 64
     num_labels = 43
     num_channels = 3
     learning_rate = 0.001
-    batch_size = 100
+    batch_size = 32
     display_freq = 100
     logs_path = "./logs"
 
-    data_helper = DataHelper()
-    data_helper.set_up_train_images_and_labels()
-    data_helper.set_up_test_images_and_labels()
+    #data_helper = DataHelper()
+    #data_helper.set_up_train_images_and_labels()
+    #data_helper.set_up_test_images_and_labels()
     with(tf.device('/cpu: 0')):
         x, y_true, hold_prob = generate_placeholders(pic_dim=pic_dim, num_labels=num_labels, num_channels=num_channels)
         model = ModelGenerator.create_cnn_model(x, hold_prob)
@@ -63,8 +63,8 @@ def perform_train():
                 print('Training epoch: {}'.format(epoch + 1))
                 for iteration in range(num_tr_iter):
                     global_step += 1
-                    batch = data_helper.next_batch(batch_size, pic_dim)
-                    batch_imgs, batch_labels = DataGenerator('utils/data/GTSRB/Final_Training/Images/', True, 32, (40, 40))
+                    #batch = data_helper.next_batch(batch_size, pic_dim)
+                    batch_imgs, batch_labels = DataGenerator('e:/deephunter/data_set/Images/data/train/', True, 32, (64, 64))
                     sess.run(optimizer, feed_dict={x: batch_imgs, y_true: batch_labels, hold_prob: 0.5})
                     if iteration % display_freq == 0:
                         loss_batch, acc_batch, summary_tr = sess.run([loss, accuracy, merged],
@@ -77,7 +77,10 @@ def perform_train():
                         with open('loss.csv', mode='a',newline='') as loss_file:
                             loss_writer = csv.writer(loss_file,delimiter=';',quotechar ='"',quoting=csv.QUOTE_MINIMAL)
                             loss_writer.writerow([epoch,iteration,loss_batch])
-                feed_dict_valid = {x: data_helper.X_valid, y_true: data_helper.y_valid, hold_prob: 1.0}
+
+                batch_imgs1, batch_labels1 = DataGenerator('e:/deephunter/data_set/Images/data/train/', True, 32,
+                                                         (64, 64))
+                feed_dict_valid = {x: batch_imgs1, y_true: batch_labels1, hold_prob: 1.0}
                 loss_valid, acc_valid = sess.run([loss, accuracy], feed_dict=feed_dict_valid)
                 print('---------------------------------------------------------')
                 print("Epoch: {0}, validation loss: {1:.2f}, validation accuracy: {2:.05%}".
